@@ -1,0 +1,127 @@
+https://docs.oracle.com/cd/B19306_01/gateways.102/b16217/net.htm#i23056
+
+Configuring Oracle Net
+The gateway must be defined to the TNS listener, and a service name must be defined for accessing the gateway.
+
+Step 1: Modify listener.ora file
+
+Add an entry for the gateway to the listener.ora file. For example:
+
+(SID_DESC=
+          (SID_NAME=sidname)
+          (ORACLE_HOME=/oracle/tg4drda/10.2.0)
+          (PROGRAM=g4drsrv))
+
+Refer to Appendix B, "Sample Files", for a sample listener.ora file.
+
+Note:
+
+The PROGRAM=g4drsrv parameter is required. It specifies to the listener the name of the gateway executable.
+Step 2: Modify tnsnames.ora file
+
+Add a gateway service name to the tnsnames.ora file on the system where your Oracle integrating server resides. Specify the service name in the USING parameter of the database link defined for accessing the gateway from the Oracle Database 10g server.
+
+linkname1 = (DESCRIPTION=
+                   (ADDRESS= 
+                        (PROTOCOL=IPC)
+                        (KEY=ORAIPC))
+                   (CONNECT_DATA=(SID=sidname))
+                   (HS=)
+           )
+You can use the IPC protocol only if the Oracle integrating server and the gateway reside on the same computer. If you use the IPC protocol adapter, then add an entry like this to tnsnames.ora:
+
+where:
+
+linkname1  is the name used to define the database link referencing the gateway.
+
+ORAIPC  is the IPC key defined in the listener.ora file for the IPC protocol.
+
+sidname  is your gateway SID, the same SID that you used for the entry in your listener.ora file.
+
+If you are using the TCP/IP protocol adapter, then add the following entry to tnsnames.ora:
+
+linkname2  is the name used to define the database link referencing the gateway.
+
+where:
+
+linkname2 = (DESCRIPTION=
+              (ADDRESS=
+                 (PROTOCOL=TCP)
+                 (PORT=port)
+                 (HOST=hostname))
+              (CONNECT_DATA=(SID=sidname))
+              (HS=)
+            )
+port  is the TCP/IP port number on which the Oracle listener is listening (default is 1541).
+
+hostname  is the name of your host system.
+
+sidname  is your gateway SID.
+
+Refer to "Sample Oracle Net tnsnames.ora File" for a sample tnsnames.ora file. For more information about configuring Oracle Net, refer to Oracle Database Net Services Administrator's Guide.
+
+Advanced Security Encryption
+Oracle Net supports the CHECKSUM command and the Export encryption algorithms. The following sections describe a basic method of verifying this feature if it is used at your site. The easiest way to determine if Advanced Security encryption is attempting to work is to deliberately set wrong configuration parameters and attempt a connection between the server and client. Incorrect parameters cause the connection to fail.
+
+After receiving the expected failure message, set the configuration parameters to the correct settings and try the connection again. Encryption is working properly if you receive no further error messages.
+
+Setting Up Advanced Security Encryption for Test
+The following procedures test Advance Security encryption by the above method. The incorrect parameter settings produce error 12660
+
+Step 1: Set Advanced Security Encryption Parameters for the Gateway
+
+Step 2: Set Advanced Security Encryption Parameters for Oracle Server
+
+Note:
+
+The international or export version of Advanced Security encryption supports the following encryption types:
+des40
+
+rc4_40
+
+Step 1: Set Advanced Security Encryption Parameters for the Gateway
+
+Edit the Oracle Net configuration file on the host system (gateway system) to add the following parameters and values:
+
+SQLNET.CRYPTO_CHECKSUM_SERVER = REJECTED
+SQLNET.ENCRYPTION_SERVER = REJECTED
+SQLNET.CRYPTO_CHECKSUM_TYPES_SERVER = (SHA1)
+SQLNET.ENCRYPTION_TYPES_SERVER = (DES40,RC4_40)
+SQLNET.CRYPTO_SEED = "abcdefg123456789"
+
+The value shown for SQLNET.CRYPTO_SEED is only an example. Set it to the value you want. Refer to the Oracle Database Advanced Security Administrator's Guide for more information.
+
+Step 2: Set Advanced Security Encryption Parameters for Oracle Server
+
+Set the advanced security encryption parameters for the Oracle integrating server.
+
+Edit the Oracle Net configuration file on the Oracle integrating server system to add the following parameters:
+
+SQLNET.CRYPTO_CHECKSUM_CLIENT = REQUIRED
+SQLNET.ENCRYPTION_CLIENT = REQUIRED
+SQLNET.CRYPTO_CHECKSUM_TYPES_CLIENT = (SHA1)
+SQLNET.ENCRYPTION_TYPES_CLIENT = (DES40,RC4_40)
+SQLNET.CRYPTO_SEED = "abcdefg123456789"
+
+The value shown for SQLNET.CRYPTO_SEED is only an example.
+
+Testing Advanced Security Encryptions
+After completing Steps 1 and 2 to set up Advanced Security encryption, you are ready to test the operation of the Advanced Security encryption by using the following steps:
+
+Step 1: Connect Gateway and Oracle Integrating Server
+
+Step 2: Reset Configuration Parameters on the Gateway
+
+Step 1: Connect Gateway and Oracle Integrating Server
+
+Use SQL*Plus to logon to the Oracle integrating server. Access the gateway through a database link. You should receive the following error:
+
+ORA-12660: Encryption or crypto-checksumming
+Step 2: Reset Configuration Parameters on the Gateway
+
+Change the following Advanced Security encryption parameters on the gateway to:
+
+SQLNET.CRYPTO_CHECKSUM_SERVER = REQUIRED
+SQLNET.ENCRYPTION_SERVER = REQUIRED
+
+Attempt the connection between the gateway and the Oracle integrating server again. If no error message is returned and the connection completes, then you can assume Advanced Security encryption is working properly.
